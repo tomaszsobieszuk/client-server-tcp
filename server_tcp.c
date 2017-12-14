@@ -93,14 +93,15 @@ NODE *list_switch( NODE *, NODE * );
 void dodaj_do_listy(struct Node **start_ref, int data);
 
 void swap(struct Node *a, struct Node *b);
-void operacja(char** arr, int arguments_value);
+void dzialanie(char** arr, int arguments_value);
 void printList(struct Node *start);
 int dodawanie(struct Node *start);
 int odejmowanie(struct Node *start);
 void reverse(struct Node** head_ref);
-void wyslij_liste(struct Node *start);
-void deleteList(struct Node** head_ref);
-void rosnaco(struct Node *start);
+void wyslijListe(struct Node *start);
+void usunListe(struct Node** head_ref);
+void sortujRosnaco(struct Node *start);
+void sortujMalejaco(struct Node *start);
 
 
 
@@ -112,7 +113,6 @@ int main(int argc, char *argv[]) {
 
     socklen_t clilen;
     char buffer[256];
-    char* new_buffer = malloc(30* sizeof(char));
     struct sockaddr_in serv_addr, cli_addr;
     int flag_RxTx;
     int arguments_value = 0;
@@ -194,43 +194,17 @@ int main(int argc, char *argv[]) {
 				//przetwazanie danych z bufora*****************
 				arguments_value = split(buffer, ' ', &arr);
 
-				printf("znaleziono elementow: %d\n",arguments_value);
-
-//				if(strcmp(arr[0], "add") == 0){
-//					int suma=0;
-//					puts("dodawanie");
-//					for(int i=1;i<arguments_value;i++){
-//
-//						suma = suma + atof(arr[i]);
-//
-//					}
-//					sprintf(buffer, "%d", suma);
-//					//write(newsock_desc,buffer,strlen(buffer));
-//				}
 
 
-
-
-				//*****************************
-				operacja(arr,arguments_value);
+				dzialanie(arr,arguments_value);
 				perror("operacja stats-> ");
-				//printf("wynik dodawania = %c\n", new_buffer);
+				//*****************************
 
-
-				//printf("Here is the message: %s\n", buffer);
-				//flag_RxTx = write(newsock_desc, new_buffer, strlen(new_buffer));
-
-				//perror("wysylanie->");
-//				if (flag_RxTx < 0)
-//					 printf("ERROR writing to socket");
-//				//close(newsock_desc);
-//				free(new_buffer);
         	}
          }
-        	 else {
-             //parent process
-             //close(newsockfd);
-          }
+
+
+
     }
     //-------------------------------------------------------------------
    return 0;
@@ -245,21 +219,7 @@ void dodaj_do_listy(struct Node **start_ref, int data)
     *start_ref = ptr1;
 }
 
-//void dodaj_do_char(char** arr, int arguments_value) {
-//
-//	struct Node *ptr = start;
-//		int suma = 0;
-//		puts("dodawanie");
-//
-//		while(ptr != NULL) {
-//
-//
-//			suma += ptr->data;
-//			ptr = ptr->next;
-//
-//		}
-//
-//}
+
 
 
 /* function to swap data of two nodes a and b*/
@@ -269,7 +229,7 @@ void swap(struct Node *a, struct Node *b) {
     b->data = temp;
 }
 
-void operacja(char** arr, int arguments_value) {
+void dzialanie(char** arr, int arguments_value) {
 
 	struct Node *start = NULL;
 	char wynik[256];
@@ -281,15 +241,11 @@ void operacja(char** arr, int arguments_value) {
 		dodaj_do_listy(&start,atof(arr[i]));
 
 	}
-	if(strcmp(arr[0], "sort") == 0){
-//		printf("\n Linked list before sorting ");
-		    printList(start);
-		    rosnaco(start);
-		    printList(start);
-		    wyslij_liste(start);
+	if(strcmp(arr[0], "sortr") == 0){
 
-//		printf("\n Linked list after sorting ");
-		//printList(start);
+		    sortujRosnaco(start);
+
+		    wyslijListe(start);
 
 
 	} else if(strcmp(arr[0], "dodaj") ==0){
@@ -309,9 +265,17 @@ void operacja(char** arr, int arguments_value) {
 		sprintf(wynik, "%d", wynik_operacji);
 		write(newsock_desc, wynik, strlen(wynik));
 
+	} 	else if(strcmp(arr[0], "sortm") == 0){
+
+		sortujMalejaco(start);
+
+		wyslijListe(start);
+
 	}
 
-	deleteList(&start);
+	usunListe(&start);
+	bzero(wynik,strlen(wynik));
+
 
 
 
@@ -386,52 +350,6 @@ void reverse(struct Node** head_ref)
     *head_ref = prev;
 }
 
-//NODE *sort( NODE *start )
-//{
-//	NODE *p, *q, *top;
-//    int changed = 1;
-//
-//    /*
-//    * We need an extra item at the top of the list just to help
-//    * with assigning switched data to the 'next' of a previous item.
-//    * It (top) gets deleted after the data is sorted.
-//    */
-//
-//    if( (top = (NODE *)malloc(sizeof(NODE))) == NULL) {
-//        fprintf( stderr, "Memory Allocation error.\n" );
-//        // In Windows, replace following with a return statement.
-//        exit(1);
-//    }
-//
-//    top->next = start;
-//    if( start != NULL && start->next != NULL ) {
-//        /*
-//        * This is a survival technique with the variable changed.
-//        *
-//        * Variable q is always one item behind p. We need q, so
-//        * that we can make the assignment q->next = list_switch( ... ).
-//        */
-//
-//        while( changed ) {
-//            changed = 0;
-//            q = top;
-//            p = top->next;
-//            while( p->next != NULL ) {
-//                /* push bigger items down */
-//                if( p->data > p->next->data ) {
-//                    q->next = list_switch( p, p->next );
-//                    changed = 1;
-//                }
-//                q = p;
-//                if( p->next != NULL )
-//                    p = p->next;
-//            }
-//        }
-//    }
-//    p = top->next;
-//    free( top );
-//    return p;
-//}
 
 NODE *sort( NODE *start )
 {
@@ -449,17 +367,7 @@ NODE *sort( NODE *start )
         start->next = sort(start->next);
     }
 
-//    struct Node *ptr = start;
-//        int i = 0;
-//        while(ptr != NULL) {
-//
-//    		sprintf(buffer[i],"%d",ptr->data);
-//        	//buffer[i]= ptr->data;
-//    		ptr = ptr->next;
-//
-//    	}
-//        write(newsock_desc, buffer, strlen(buffer));
-    return start;
+    //return start;
 }
 
 NODE *list_switch( NODE *l1, NODE *l2 )
@@ -469,33 +377,59 @@ NODE *list_switch( NODE *l1, NODE *l2 )
     return l2;
 }
 
-void wyslij_liste(struct Node *start) {
+//void wyslijListe(struct Node *start) {
+//	struct Node *ptr = start;
+//	perror("posortowane liczby status => ");
+//
+//	char buffer[256];
+//
+//	perror("przed petla while status=>");
+//	while (ptr != NULL) {
+//		sprintf(buffer, "%d ", ptr->data);
+//
+//		perror("write while status=>");
+//
+//		write(newsock_desc, buffer, strlen(buffer));
+//		ptr = ptr->next;
+//		bzero(buffer,strlen(buffer));
+//		perror("petla while status=>");
+//
+//	}
+//	bzero(buffer, strlen(buffer));
+//
+//}
+
+
+void wyslijListe(struct Node *start) {
 	struct Node *ptr = start;
-	//char str[] = "Posortowane liczby: ";
 	perror("posortowane liczby status => ");
-	//write(newsock_desc, str, strlen(str));
-	char str2[256];
-	//bzero(str2,strlen(str2));
+
+	char buffer_temp[100];
+	char buffer[100];
+
+	bzero(buffer, strlen(buffer));
 	perror("przed petla while status=>");
 	while (ptr != NULL) {
-		sprintf(str2, "%d ", ptr->data);
-		//write(newsock_desc, str2, strlen(str2));
+		sprintf(buffer_temp, "%d ", ptr->data);
+
 		perror("write while status=>");
 
-		write(newsock_desc, str2, strlen(str2));
+		strcat(buffer,buffer_temp);
+		//write(newsock_desc, buffer, strlen(buffer));
 		ptr = ptr->next;
-		bzero(str2,strlen(str2));
-		perror("petla while status=>");
+		//bzero(buffer,strlen(buffer));
+		//perror("petla while status=>");
 
 	}
-	//str2[256] = NULL;
+	perror("po petli while status=>");
+	write(newsock_desc, buffer, strlen(buffer));
+	bzero(buffer, strlen(buffer));
+	bzero(buffer_temp, strlen(buffer));
 
-	//free(str2);
-	//free(str);
 }
 
-void deleteList(struct Node** head_ref) {
-	/* deref head_ref to get the real head */
+void usunListe(struct Node** head_ref) {
+
 	struct Node* current = *head_ref;
 	struct Node* next;
 	while (current != NULL) {
@@ -506,7 +440,7 @@ void deleteList(struct Node** head_ref) {
 	*head_ref = NULL;
 }
 
-void rosnaco(struct Node *start) {
+void sortujRosnaco(struct Node *start) {
 	int swapped, i;
 	struct Node *ptr1;
 	struct Node *lptr = NULL;
@@ -518,6 +452,28 @@ void rosnaco(struct Node *start) {
 
 		while (ptr1->next != lptr) {
 			if (ptr1->data > ptr1->next->data) {
+				swap(ptr1, ptr1->next);
+				swapped = 1;
+			}
+			ptr1 = ptr1->next;
+		}
+		lptr = ptr1;
+	} while (swapped);
+}
+
+void sortujMalejaco(struct Node *start) {
+	int swapped, i;
+	struct Node *ptr1;
+	struct Node *lptr = NULL;
+	/* Checking for empty list */
+	if (ptr1 == NULL)
+		return;
+	do {
+		swapped = 0;
+		ptr1 = start;
+
+		while (ptr1->next != lptr) {
+			if (ptr1->data < ptr1->next->data) {
 				swap(ptr1, ptr1->next);
 				swapped = 1;
 			}
